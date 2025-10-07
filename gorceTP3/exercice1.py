@@ -1,3 +1,8 @@
+ALPHABET = (
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "!#()*+/?"
+)
 def hachage_caractere(caractere : str) -> int :
     """fonction qui retourne le code binaire sur un octet 
     équivalent au nombre de l'encodage utf 8 d'un caractère"""
@@ -30,12 +35,12 @@ if __name__ == "__main__":
     resultat : int
     resultat2 : int
     caractere=""
-
+    
     while len(caractere) != 1 :
         caractere = input("Entrez un caractere : ")
-        while ord(caractere)<20 or ord(caractere)>80 :
-            caractere = input("Entrez un caractere :")
+        while caractere not in ALPHABET :
+            caractere = input("Entrez un caractere : ")
     resultat = hachage_caractere(caractere)
     resultat2 = hachage_caractere_v2(caractere)
     print("Le code binaire du caractere ", caractere, " est : ", resultat, " et ", resultat2)
-    
+
