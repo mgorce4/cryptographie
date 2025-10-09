@@ -85,7 +85,7 @@ if __name__ == "__main__":
     print("=== Exercice 2 : Collisions et préimages ===\n")
 
     # 1) Collision
-    print("1️⃣ Recherche de collision :")
+    print("1️ Recherche de collision :")
     collision: Optional[Tuple[str, str, str]] = trouver_collision()
     if collision:
         c1, c2, h = collision
@@ -94,13 +94,13 @@ if __name__ == "__main__":
         print("Aucune collision trouvée (attendu si hash = ord()).")
 
     # 2) Préimage pour un caractère aléatoire
-    print("\n2️⃣ Exemple de recherche de préimage :")
+    print("\n2️ Exemple de recherche de préimage :")
     caractere_vrai: str = random.choice(ALPHABET)
     hash_cible: str = hachage_caractere_v2(caractere_vrai)
     trouve, essais = trouver_preimage(hash_cible)
     print(f"Caractère choisi : '{caractere_vrai}', trouvé : '{trouve}' en {essais} essais")
 
     # 3) Répétitions
-    print("\n3️⃣ Répétitions de recherche de préimages :")
-    repetitions_preimages(n_repetitions=100, avec_remise=True)
-    repetitions_preimages(n_repetitions=100, avec_remise=False)
+    print("\n3️ Répétitions de recherche de préimages :")
+    repetitions_preimages(n_repetitions=1000, avec_remise=True)
+    repetitions_preimages(n_repetitions=1000, avec_remise=False)
