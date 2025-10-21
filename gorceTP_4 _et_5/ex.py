@@ -1,6 +1,7 @@
 import hashlib
 import os
 import itertools
+import argon2
 
 ALPHABET = (
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -141,14 +142,14 @@ def ex4():
     # Lire le dictionnaire depuis un fichier
     dict_path = os.path.join(script_dir, "dictionary.txt")
     try:
-        with open(dict_path, "r") as f:
+        with open(dict_path, "r", encoding="utf-8") as f:
             dictionary = f.read().strip()
     except FileNotFoundError:
         print(f"Erreur : Le fichier 'dictionary.txt' n'a pas été trouvé.")
         print("Création d'un dictionnaire par défaut...")
         dictionary = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         # Créer le fichier dictionary.txt
-        with open(dict_path, "w") as f:
+        with open(dict_path, "w", encoding="utf-8") as f:
             f.write(dictionary)
         print(f"Fichier 'dictionary.txt' créé avec {len(dictionary)} caractères.")
     
@@ -159,153 +160,161 @@ def ex4():
     # Générer les mots de passe cibles avec le vrai mot de passe maître
     tags = ["Unilim", "Amazon", "Netflix"]
     
-    # Menu de choix pour l'attaque
-    print("\nChoisissez le type d'attaque :")
-    print("1. Attaque sur un seul tag (Unilim) avec N=1")
-    print("2. Attaque sur trois tags (Unilim, Amazon, Netflix) avec N=1")
-    print("3. Attaque sur un tag avec N=2")
-    print("4. Attaque sur un tag avec N=3")
-    
-    choice = int(input("\nVotre choix : "))
-    
-    if choice == 1:
-        # Attaque sur un seul tag
-        N = 1
-        target_tag = "Unilim"
-        target_hash = hash_and_truncate(real_master_pwd + target_tag, N)
+    choice = 0
+    while choice != 5:
+        # Menu de choix pour l'attaque
+        print("\n" + "="*60)
+        print("Choisissez le type d'attaque :")
+        print("1. Attaque sur un seul tag (Unilim) avec N=1")
+        print("2. Attaque sur trois tags (Unilim, Amazon, Netflix) avec N=1")
+        print("3. Attaque sur un tag avec N=2")
+        print("4. Attaque sur un tag avec N=3")
+        print("5. Retour au menu principal")
+        print("="*60)
         
-        print(f"\nHash cible pour '{target_tag}' avec N={N} : {target_hash}")
-        print(f"\nRecherche d'une collision sur {N} caractère(s)...")
-        print(f"Probabilité théorique de collision : 1/{16**N} = 1/{16**N}")
+        choice = int(input("\nVotre choix : "))
         
-        attempts = 0
-        found = False
-        
-        # Générer tous les mots de passe possibles de 10 caractères
-        for candidate in itertools.product(dictionary, repeat=10):
-            candidate_pwd = ''.join(candidate)
-            candidate_hash = hash_and_truncate(candidate_pwd + target_tag, N)
-            attempts += 1
+        if choice == 1:
+            # Attaque sur un seul tag
+            N = 1
+            target_tag = "Unilim"
+            target_hash = hash_and_truncate(real_master_pwd + target_tag, N)
             
-            if candidate_hash == target_hash:
-                print(f"\n✓ COLLISION TROUVÉE !")
-                print(f"Mot de passe candidat : {candidate_pwd}")
-                print(f"Nombre d'essais : {attempts}")
-                print(f"Hash produit : {candidate_hash}")
-                found = True
-                break
+            print(f"\nHash cible pour '{target_tag}' avec N={N} : {target_hash}")
+            print(f"\nRecherche d'une collision sur {N} caractère(s)...")
+            print(f"Probabilité théorique de collision : 1/{16**N} = 1/{16**N}")
             
-            if attempts % 100000 == 0:
-                print(f"Essais : {attempts}...", end='\r')
-        
-        if not found:
-            print(f"\nAucune collision trouvée après {attempts} essais.")
-    
-    elif choice == 2:
-        # Attaque sur trois tags
-        N = 1
-        target_hashes = {tag: hash_and_truncate(real_master_pwd + tag, N) for tag in tags}
-        
-        print(f"\nHashes cibles avec N={N} :")
-        for tag, h in target_hashes.items():
-            print(f"  {tag}: {h}")
-        
-        print(f"\nRecherche d'une collision sur les 3 tags...")
-        print(f"Probabilité théorique : 1/{16**(N*3)} = 1/{16**(N*3)}")
-        
-        attempts = 0
-        found = False
-        
-        for candidate in itertools.product(dictionary, repeat=10):
-            candidate_pwd = ''.join(candidate)
-            attempts += 1
+            attempts = 0
+            found = False
             
-            # Vérifier si le candidat produit les mêmes hash pour tous les tags
-            match = True
-            for tag in tags:
-                if hash_and_truncate(candidate_pwd + tag, N) != target_hashes[tag]:
-                    match = False
+            # Générer tous les mots de passe possibles de 10 caractères
+            for candidate in itertools.product(dictionary, repeat=10):
+                candidate_pwd = ''.join(candidate)
+                candidate_hash = hash_and_truncate(candidate_pwd + target_tag, N)
+                attempts += 1
+                
+                if candidate_hash == target_hash:
+                    print(f"\n✓ COLLISION TROUVÉE !")
+                    print(f"Mot de passe candidat : {candidate_pwd}")
+                    print(f"Nombre d'essais : {attempts}")
+                    print(f"Hash produit : {candidate_hash}")
+                    found = True
                     break
+                
+                if attempts % 100000 == 0:
+                    print(f"Essais : {attempts}...", end='\r')
             
-            if match:
-                print(f"\n✓ COLLISION TROUVÉE SUR LES 3 TAGS !")
-                print(f"Mot de passe candidat : {candidate_pwd}")
-                print(f"Nombre d'essais : {attempts}")
-                found = True
-                break
+            if not found:
+                print(f"\nAucune collision trouvée après {attempts} essais.")
+        
+        elif choice == 2:
+            # Attaque sur trois tags
+            N = 1
+            target_hashes = {tag: hash_and_truncate(real_master_pwd + tag, N) for tag in tags}
             
-            if attempts % 100000 == 0:
-                print(f"Essais : {attempts}...", end='\r')
-        
-        if not found:
-            print(f"\nAucune collision trouvée après {attempts} essais.")
-    
-    elif choice == 3:
-        # Attaque avec N=2
-        N = 2
-        target_tag = "Unilim"
-        target_hash = hash_and_truncate(real_master_pwd + target_tag, N)
-        
-        print(f"\nHash cible pour '{target_tag}' avec N={N} : {target_hash}")
-        print(f"\nRecherche d'une collision sur {N} caractères...")
-        print(f"Probabilité théorique de collision : 1/{16**N} = 1/{16**N}")
-        
-        attempts = 0
-        found = False
-        
-        for candidate in itertools.product(dictionary, repeat=10):
-            candidate_pwd = ''.join(candidate)
-            candidate_hash = hash_and_truncate(candidate_pwd + target_tag, N)
-            attempts += 1
+            print(f"\nHashes cibles avec N={N} :")
+            for tag, h in target_hashes.items():
+                print(f"  {tag}: {h}")
             
-            if candidate_hash == target_hash:
-                print(f"\n✓ COLLISION TROUVÉE !")
-                print(f"Mot de passe candidat : {candidate_pwd}")
-                print(f"Nombre d'essais : {attempts}")
-                print(f"Hash produit : {candidate_hash}")
-                found = True
-                break
+            print(f"\nRecherche d'une collision sur les 3 tags...")
+            print(f"Probabilité théorique : 1/{16**(N*3)} = 1/{16**(N*3)}")
             
-            if attempts % 100000 == 0:
-                print(f"Essais : {attempts}...", end='\r')
-        
-        if not found:
-            print(f"\nAucune collision trouvée après {attempts} essais.")
-    
-    elif choice == 4:
-        # Attaque avec N=3
-        N = 3
-        target_tag = "Unilim"
-        target_hash = hash_and_truncate(real_master_pwd + target_tag, N)
-        
-        print(f"\nHash cible pour '{target_tag}' avec N={N} : {target_hash}")
-        print(f"\nRecherche d'une collision sur {N} caractères...")
-        print(f"Probabilité théorique de collision : 1/{16**N} = 1/{16**N}")
-        
-        attempts = 0
-        found = False
-        
-        for candidate in itertools.product(dictionary, repeat=10):
-            candidate_pwd = ''.join(candidate)
-            candidate_hash = hash_and_truncate(candidate_pwd + target_tag, N)
-            attempts += 1
+            attempts = 0
+            found = False
             
-            if candidate_hash == target_hash:
-                print(f"\n✓ COLLISION TROUVÉE !")
-                print(f"Mot de passe candidat : {candidate_pwd}")
-                print(f"Nombre d'essais : {attempts}")
-                print(f"Hash produit : {candidate_hash}")
-                found = True
-                break
+            for candidate in itertools.product(dictionary, repeat=10):
+                candidate_pwd = ''.join(candidate)
+                attempts += 1
+                
+                # Vérifier si le candidat produit les mêmes hash pour tous les tags
+                match = True
+                for tag in tags:
+                    if hash_and_truncate(candidate_pwd + tag, N) != target_hashes[tag]:
+                        match = False
+                        break
+                
+                if match:
+                    print(f"\n✓ COLLISION TROUVÉE SUR LES 3 TAGS !")
+                    print(f"Mot de passe candidat : {candidate_pwd}")
+                    print(f"Nombre d'essais : {attempts}")
+                    found = True
+                    break
+                
+                if attempts % 100000 == 0:
+                    print(f"Essais : {attempts}...", end='\r')
             
-            if attempts % 100000 == 0:
-                print(f"Essais : {attempts}...", end='\r')
+            if not found:
+                print(f"\nAucune collision trouvée après {attempts} essais.")
         
-        if not found:
-            print(f"\nAucune collision trouvée après {attempts} essais.")
-    
-    else:
-        print("Choix invalide.")
+        elif choice == 3:
+            # Attaque avec N=2
+            N = 2
+            target_tag = "Unilim"
+            target_hash = hash_and_truncate(real_master_pwd + target_tag, N)
+            
+            print(f"\nHash cible pour '{target_tag}' avec N={N} : {target_hash}")
+            print(f"\nRecherche d'une collision sur {N} caractères...")
+            print(f"Probabilité théorique de collision : 1/{16**N} = 1/{16**N}")
+            
+            attempts = 0
+            found = False
+            
+            for candidate in itertools.product(dictionary, repeat=10):
+                candidate_pwd = ''.join(candidate)
+                candidate_hash = hash_and_truncate(candidate_pwd + target_tag, N)
+                attempts += 1
+                
+                if candidate_hash == target_hash:
+                    print(f"\n✓ COLLISION TROUVÉE !")
+                    print(f"Mot de passe candidat : {candidate_pwd}")
+                    print(f"Nombre d'essais : {attempts}")
+                    print(f"Hash produit : {candidate_hash}")
+                    found = True
+                    break
+                
+                if attempts % 100000 == 0:
+                    print(f"Essais : {attempts}...", end='\r')
+            
+            if not found:
+                print(f"\nAucune collision trouvée après {attempts} essais.")
+        
+        elif choice == 4:
+            # Attaque avec N=3
+            N = 3
+            target_tag = "Unilim"
+            target_hash = hash_and_truncate(real_master_pwd + target_tag, N)
+            
+            print(f"\nHash cible pour '{target_tag}' avec N={N} : {target_hash}")
+            print(f"\nRecherche d'une collision sur {N} caractères...")
+            print(f"Probabilité théorique de collision : 1/{16**N} = 1/{16**N}")
+            
+            attempts = 0
+            found = False
+            
+            for candidate in itertools.product(dictionary, repeat=10):
+                candidate_pwd = ''.join(candidate)
+                candidate_hash = hash_and_truncate(candidate_pwd + target_tag, N)
+                attempts += 1
+                
+                if candidate_hash == target_hash:
+                    print(f"\n✓ COLLISION TROUVÉE !")
+                    print(f"Mot de passe candidat : {candidate_pwd}")
+                    print(f"Nombre d'essais : {attempts}")
+                    print(f"Hash produit : {candidate_hash}")
+                    found = True
+                    break
+                
+                if attempts % 100000 == 0:
+                    print(f"Essais : {attempts}...", end='\r')
+            
+            if not found:
+                print(f"\nAucune collision trouvée après {attempts} essais.")
+        
+        elif choice == 5:
+            print("\nRetour au menu principal...")
+        
+        else:
+            print("Choix invalide.")
 
 def menu():
     print("\n-----------------------------------------------------------------------------------------")
