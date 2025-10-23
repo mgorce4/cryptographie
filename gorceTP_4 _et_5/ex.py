@@ -1,7 +1,6 @@
 import hashlib
 import os
 import itertools
-import argon2
 
 ALPHABET = (
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -81,7 +80,7 @@ def ex2():
 
 def ex3():
     """Exercice 3 : Mot de passe maître
-    1 va cherhcer le mot de passe maître dans le fichier mpwd.txt
+    1 va chercher le mot de passe maître dans le fichier mpwd.txt
     2 Demande à l'utilisateur de saisir la taille du mot de passe haché
     3 Demander à l'utilisateur de saisir un tag
     4 hasher le mot de passe concaténé avec le tag avec sha"""
@@ -93,12 +92,14 @@ def ex3():
     hashedMdp : str
     choice : int 
     choice = 0
+    
     # Get the directory where this script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
     mpwd_path = os.path.join(script_dir, "mpwd.txt")
-    with open(mpwd_path, "r") as f:
+    with open(mpwd_path, "r", encoding="utf-8") as f:
         mdp = f.read().strip()
-    if mdp == "" or not is_valid_string(mdp):
+    
+    if mdp is None  or not is_valid_string(mdp):
         mdp = get_valid_input("Le mot de passe maître est vide ou invalide. Veuillez entrer un mot de passe maître valide : ")
     else:
         while (choice != 1 and choice != 2):
@@ -115,28 +116,21 @@ def ex3():
 
 def ex4():
     """Exercice 4 : Attaque sur des mots de passe
-    Dans cet exercice vous allez tenter de trouver des préimages possibles pour le mot de passe maitre, c'est à dire, vous allez tenter de casser la sécurité de votre générateur de mots de passe.
-    
-    Votre tache sera de trouver un mot de passe valide en connaissant le tag utilisé mais pas le mot de passe maitre
-    
-    Assurez vous premièrement que votre fichier de mots de passe maitre contient un mot de passe maitre de 1à caractères (àvous de les choisir). Dans votre rapport discutez quelle est la probabilité qu'un attaquant retrouve ce mot de passe maitre par force brute.
-    
-    Générez, en utilisant votre générateur de mots de passe et le mot de passe maitre, des mots de passe d'un caractere(N=1) pour les tags suivants : Unilim, Amazon, Netflix
-    
-    Dans un premier temps votre attaque devra trouver un mot de passe maitre qui donnera le même mot de passe que celui produit par votre vrai mot de pass sur le tag Unilim
-    
-    La stratégie sera celle d'une attaque par dictionnaire. Votre dictionnaire doit contenir tous les mots de passe possibles sur 10 caractères, chaque caractère provenant de votre dictionnaire, jusqu'à trouver un mot de passe identique(pour le tag unilim) à celui produit par le gestionnaire de mots de passe. Combien de possibilités avez vous essayées? Quelle est la probabilité théorique de trouver un mot de passe maitre qui provoque une collision et comment votre nombre d'essais se compare à cette valeur ?
-    
-    Dans un deuxième temps, votre attaque devra retrouver un mot de passe maitre qui provoque une collision sur les 3 tags : Unilim, Amazon et Netflix. Comparez le nombre d'essais nécessaire pour votre attaque dans ce cas par rapport au cas précédent.
-    
-    Finalement essayez la même attaque pour N=2 et N=3 en enregistrant le nombre d'esssais"""
-    
-    
+    Cette fonction réalise une attaque par dictionnaire pour retrouver un mot de passe maître
+    en cherchant des collisions sur des hachages tronqués.
+    1 Lire le mot de passe maître réel depuis le fichier mpwd.txt
+    2 Lire le dictionnaire depuis un fichier dictionary.txt
+    3 Proposer un menu pour choisir le type d'attaque
+    4 Pour chaque type d'attaque, générer des mots de passe candidats à partir du dictionnaire
+       et vérifier s'ils produisent les mêmes hachages tronqués que le mot de passe maître réel
+    5 Afficher les résultats de l'attaque
+    6 Permettre de revenir au menu principal
+    """
     
     # Lire le mot de passe maître réel
     script_dir = os.path.dirname(os.path.abspath(__file__))
     mpwd_path = os.path.join(script_dir, "mpwd.txt")
-    with open(mpwd_path, "r") as f:
+    with open(mpwd_path, "r", encoding="utf-8") as f:
         real_master_pwd = f.read().strip()
     
     # Lire le dictionnaire depuis un fichier
@@ -316,6 +310,8 @@ def ex4():
         else:
             print("Choix invalide.")
 
+
+
 def menu():
     print("\n-----------------------------------------------------------------------------------------")
     print("Bienvenue dans le programme de hachage de mot de passe\nVoici les exercices disponibles :")
@@ -323,14 +319,13 @@ def menu():
     print("2. Des mots de passe d'une taille demandée")
     print("3. Mot de passe maître")
     print("4. Attaque sur des mots de passe")
-    print("5. Sécuriser le mot de passe maître")
-    print("6. Quitter")
+    print("5. Quitter")
 
 
 if __name__ == "__main__":
     nb : int
     nb = 0
-    while nb != 6:
+    while nb != 5:
         menu()
         nb = int(input("Entrez le numéro de l'exercice que vous voulez exécuter : "))
         match nb:
@@ -343,8 +338,6 @@ if __name__ == "__main__":
             case 4:
                 ex4()
             case 5:
-                pass
-            case 6:
                 print("Au revoir !")
             case _:
                 print("Choix invalide, veuillez réessayer.")
